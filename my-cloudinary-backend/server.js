@@ -46,4 +46,33 @@ app.post("/upload", upload.single("image"), (req, res) => {
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
-  
+  import express from "express";
+import multer from "multer";
+import path from "path";
+import { fileURLToPath } from "url";
+import fs from "fs";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const app = express();
+
+const upload = multer({ dest: "uploads/" });
+
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
+app.post("/upload", upload.single("image"), (req, res) => {
+  console.log(req.file);
+  if (!req.file) return res.status(400).send("No file uploaded");
+
+  const imageUrl = `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`;
+  res.status(200).json({ url: imageUrl });
+});
+
+app.get("/", (req, res) => {
+  res.send("Image upload server is running.");
+});
+
+app.listen(3000, () => {
+  console.log("Server running on port 3000");
+});
