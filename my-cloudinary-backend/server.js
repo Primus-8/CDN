@@ -46,9 +46,9 @@ app.post("/upload", upload.single("image"), (req, res) => {
   res.json({ url: imageUrl });
 });
 
-// ✅ Add this below
+
 app.get("/upload", (req, res) => {
-  res.send("✅ Upload route is live. Use POST request to upload an image.");
+  res.send(" Upload route is live. Use POST request to upload an image.");
 });
 
 app.listen(PORT, () => {
