@@ -1,23 +1,3 @@
-
-
-const upload = multer({ storage });
-
-app.post("/upload", upload.single("image"), (req, res) => {
-  const file = req.file;
-  if (!file) return res.status(400).json({ error: "No file uploaded" });
-
-  const publicUrl = `${req.protocol}://${req.get("host")}/uploads/${file.originalname}`;
-
-  res.status(200).json({
-    message: "Image uploaded successfully",
-    url: publicUrl,
-  });
-});
-
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-});
-
 const express = require("express");
 const multer = require("multer");
 const path = require("path");
@@ -26,31 +6,44 @@ const fs = require("fs");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-const uploadPath = path.join(__dirname, "uploads");
-if (!fs.existsSync(uploadPath)) {
-  fs.mkdirSync(uploadPath);
+// Create uploads folder if not exists
+const uploadDir = path.join(__dirname, "uploads");
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir);
 }
 
+// Multer setup
 const storage = multer.diskStorage({
-  destination: uploadPath,
-  filename: (req, file, cb) => {
-    cb(null, `${Date.now()}-${file.originalname}`);
+  destination: (req, file, cb) => {
+    cb(null, uploadDir);
   },
+  filename: (req, file, cb) => {
+    const uniqueName = `${Date.now()}-${file.originalname}`;
+    cb(null, uniqueName);
+  }
 });
+
 const upload = multer({ storage });
 
-app.use("/public", express.static(path.join(__dirname, "public")));
+// Serve static files from public/uploads
+app.use("/uploads", express.static(path.join(__dirname, "public/uploads")));
 
-app.post("/upload", upload.single("image"), (req, res) => {
-  const imageUrl = `/public/uploads/${req.file.filename}`;
-  res.json({ url: imageUrl });
-});
-
-
+// Test GET route to avoid 404 on browser
 app.get("/upload", (req, res) => {
-  res.send(" Upload route is live. Use POST request to upload an image.");
+  res.send("Upload route working. But use POST to upload files.");
 });
 
+//  Main POST upload route
+app.post("/upload", upload.single("image"), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: "No file uploaded" });
+  }
+
+  const imageUrl = `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`;
+  res.status(200).json({ message: "Upload successful", url: imageUrl });
+});
+
+// Start server
 app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+  console.log(`Server running on http://localhost:${PORT}`);
 });
